@@ -1,123 +1,156 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>IMR — Movie Recommendations</title>
+  <title>Movie Recommender — Recommendations</title>
   <style>
-    body {
-      background: linear-gradient(180deg, #f6fbff 0%, #ffffff 60%);
-      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      color: #07263a;
+    :root{
+      --bg-start:#f6fbff;
+      --bg-end:#ffffff;
+      --accent:#0b4a6f;
+      --cta:#007bff;
+      --muted:#6b7280;
+      --radius:12px;
+      --shadow:0 8px 30px rgba(11,37,59,0.06);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
-    .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-      text-align: center;
-      width: 90%;
-      max-width: 500px;
-    }
-    h1 {
-      color: #0b4a6f;
-    }
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #e6eef6;
-      margin: 10px 0;
-      font-size: 15px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #007bff;
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    #result {
-      margin-top: 20px;
-      background: #f5faff;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: left;
-      display: none;
-    }
-    #logout {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #ef4444;
-      color: #fff;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    #logout:hover {
-      background: #dc2626;
-    }
+
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-start) 0%, var(--bg-end) 60%);-webkit-font-smoothing:antialiased;color:#07263a;}
+    .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:18px;padding:28px;box-sizing:border-box;}
+
+    header{width:100%;max-width:980px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand .mark{width:44px;height:28px;background:#f5c518;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#111}
+    .brand .title{font-weight:800;color:var(--accent);font-size:18px}
+    .user{color:var(--muted);font-size:14px}
+
+    .container{width:100%;max-width:980px;display:flex;gap:24px;align-items:flex-start}
+    .main{flex:1;background:linear-gradient(180deg,#fff,#f4fbff);padding:24px;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .main h1{margin:0 0 6px 0;font-size:20px}
+    .muted{color:var(--muted);font-size:14px}
+
+    .search{margin-top:12px;display:flex;gap:10px;align-items:center}
+    input#query{flex:1;padding:10px;border-radius:10px;border:1px solid #e6eef6;font-size:15px;box-sizing:border-box}
+    button#clear, button#getRec{padding:10px 14px;border-radius:10px;border:0;background:var(--cta);color:#fff;cursor:pointer;font-weight:600}
+    button#clear{background:#e6eef6;color:var(--accent)}
+
+    .results{margin-top:18px;background:#fff;padding:16px;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .movie-item{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #e6eef6}
+    .movie-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .movie-title{font-weight:800;color:#07263a;font-size:16px;margin-bottom:4px}
+    .movie-meta{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .movie-desc{font-size:14px;color:#07263a;margin-bottom:10px;line-height:1.5}
+    .movie-actions{display:flex;gap:8px}
+    .btn-trailer{padding:8px 12px;background:#ff0000;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;text-decoration:none;display:inline-block}
+    .btn-trailer:hover{background:#cc0000}
+
+    #no-results{color:var(--muted);text-align:center;padding:16px}
+    .status{color:var(--muted);text-align:center;padding:16px}
   </style>
 </head>
 <body>
-  <button id="logout">Logout</button>
-  <div class="container">
-    <h1>🎬 Movie Recommender</h1>
-    <p>Ask for recommendations below, <span id="username"></span>!</p>
-    <input type="text" id="query" placeholder="e.g. action movies like John Wick">
-    <button id="getRec">Get Recommendations</button>
-    <div id="result"></div>
+  <div class="page">
+    <header>
+      <div class="brand"><div class="mark">MR</div><div class="title">Movie Recommender</div></div>
+      <div class="user">Signed in as <strong id="username">you</strong></div>
+    </header>
+
+    <div class="container">
+      <main class="main" role="main" aria-labelledby="rec-heading">
+        <h1 id="rec-heading">Recommendations</h1>
+        <div class="muted">Enter your query here and get the recommendations!</div>
+
+        <div class="search" role="search" aria-label="Recommendation search">
+          <input id="query" type="text" placeholder="e.g. action movies like John Wick" />
+          <button id="getRec">Get Recommendations</button>
+          <button id="clear" type="button">Clear</button>
+        </div>
+
+        <div class="results" id="results">
+          <div id="no-results" style="display:block">No recommendations yet. Enter a query to get started.</div>
+          <div id="movies-list"></div>
+        </div>
+      </main>
+    </div>
   </div>
 
-  <script>
-    // Accept either storage key used elsewhere:
-    // prefer 'mr_current' (used by the updated signin), fall back to 'loggedInUser'
-    const loggedIn = localStorage.getItem('mr_current') || localStorage.getItem('loggedInUser');
+  <button id="logout" style="position:fixed;top:18px;right:18px;background:#ef4444;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px">Logout</button>
 
+  <script>
+    // authentication
+    const loggedIn = localStorage.getItem('mr_current') || localStorage.getItem('loggedInUser');
     if (!loggedIn) {
-      // Not authenticated — send back to sign-in page
       alert('Please login first.');
-      // if index.html is in the same folder:
       window.location.href = 'index.html';
     } else {
-      // show the username in the UI
       document.getElementById('username').textContent = loggedIn;
     }
 
-    // Logout clears both possible keys for compatibility
+    // logout
     document.getElementById('logout').addEventListener('click', () => {
       localStorage.removeItem('mr_current');
       localStorage.removeItem('loggedInUser');
-      // optional: remove any demo keys
       localStorage.removeItem('mr_current_user');
       window.location.href = 'index.html';
     });
 
-    // Fetch recommendations
+    // helpers
+    function makeYouTubeSearch(title){
+      return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(title + ' trailer');
+    }
+    function escapeHtml(str){
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    // render movies as plain text list
+    function renderMovies(movies) {
+      const moviesList = document.getElementById('movies-list');
+      const noResults = document.getElementById('no-results');
+      moviesList.innerHTML = '';
+      noResults.style.display = 'none';
+
+      if (!movies || movies.length === 0) {
+        noResults.style.display = 'block';
+        return;
+      }
+
+      movies.forEach((movie, idx) => {
+        const title = (movie.title || 'Untitled').trim();
+        const genre = (movie.genre || '').trim();
+        const description = (movie.description || '').trim();
+        const rating = (movie.rating || '').trim();
+
+        const item = document.createElement('div');
+        item.className = 'movie-item';
+        item.innerHTML = `
+          <div class="movie-title">${idx + 1}. ${escapeHtml(title)}</div>
+          <div class="movie-meta">${escapeHtml(genre)}${rating ? ' • ' + escapeHtml(rating) : ''}</div>
+          <div class="movie-desc">${escapeHtml(description)}</div>
+          <div class="movie-actions">
+            <a class="btn-trailer" target="_blank" rel="noopener noreferrer" href="${makeYouTubeSearch(title)}">Watch trailer</a>
+          </div>
+        `;
+        moviesList.appendChild(item);
+      });
+    }
+
+    // clear
+    document.getElementById('clear').addEventListener('click', () => {
+      document.getElementById('query').value = '';
+      document.getElementById('movies-list').innerHTML = '';
+      document.getElementById('no-results').style.display = 'block';
+    });
+
+    // fetch recommendations
     document.getElementById('getRec').addEventListener('click', async () => {
       const query = document.getElementById('query').value.trim();
-      const result = document.getElementById('result');
+      const moviesList = document.getElementById('movies-list');
+      const noResults = document.getElementById('no-results');
       if (!query) return alert('Enter a movie query!');
 
-      result.style.display = 'block';
-      result.innerHTML = '<em>Fetching recommendations...</em>';
+      moviesList.innerHTML = '<div class="status">Fetching recommendations…</div>';
+      noResults.style.display = 'none';
 
       try {
         const res = await fetch('http://localhost:3000/recommend', {
@@ -125,11 +158,29 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query })
         });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          console.error('Server error:', errData);
+          moviesList.innerHTML = `<div class="status" style="color:#b91c1c">Error: ${escapeHtml(String(errData.error || 'Unknown error'))}</div>`;
+          return;
+        }
+
         const data = await res.json();
-        result.innerHTML = `<strong>Recommendations:</strong><br>${(data.recommendation || '').replace(/\n/g, '<br>')}`;
+        console.log('Response data:', data);
+
+        const movies = data.movies || data.recommendations || [];
+        
+        if (!Array.isArray(movies) || movies.length === 0) {
+          noResults.style.display = 'block';
+          moviesList.innerHTML = '';
+          return;
+        }
+
+        renderMovies(movies);
       } catch (err) {
-        console.error(err);
-        result.innerHTML = 'Error fetching recommendations.';
+        console.error('Fetch error:', err);
+        moviesList.innerHTML = `<div class="status" style="color:#b91c1c">Network error: ${escapeHtml(err.message)}</div>`;
       }
     });
   </script>
